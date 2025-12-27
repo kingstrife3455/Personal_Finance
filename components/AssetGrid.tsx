@@ -68,9 +68,9 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                 <table className="w-full text-sm">
                     <thead className="bg-muted/50">
                         <tr className="border-b">
-                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground min-w-[300px] sticky left-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">Asset</th>
+                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground min-w-[300px] sticky left-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border">Asset</th>
                             {months.map((m) => (
-                                <th key={m.toISOString()} className="h-12 px-4 text-right align-middle font-medium text-muted-foreground min-w-[140px]">
+                                <th key={m.toISOString()} className="h-12 px-4 text-right align-middle font-medium text-muted-foreground min-w-[140px] border">
                                     {format(m, "MMM")}
                                 </th>
                             ))}
@@ -79,7 +79,7 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                     <tbody>
                         {assets.map((asset) => (
                             <tr key={asset.id} className="border-b transition-colors hover:bg-muted/50">
-                                <td className="p-4 align-middle font-medium sticky left-0 bg-card z-10 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)]">
+                                <td className="p-4 align-middle font-medium sticky left-0 bg-card z-10 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] border">
                                     <div className="flex items-center gap-2">
                                         <div className="flex flex-col gap-0.5">
                                             <button
@@ -167,14 +167,17 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                     );
 
                                     return (
-                                        <td key={m.toISOString()} className="p-2 align-middle">
-                                            <Input
-                                                type="number"
-                                                step="0.01"
-                                                className="w-full text-right h-8 bg-transparent border-transparent hover:border-input focus:border-input focus:bg-background transition-all"
-                                                defaultValue={record?.value}
-                                                onBlur={(e) => handleUpdate(asset.id, m, e.target.value)}
-                                            />
+                                        <td key={m.toISOString()} className="p-2 align-middle border">
+                                            <div className="relative">
+                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
+                                                <Input
+                                                    type="number"
+                                                    step="0.01"
+                                                    className="w-full pl-6 text-right h-8 bg-transparent border-transparent hover:border-input focus:border-input focus:bg-background transition-all"
+                                                    defaultValue={record?.value}
+                                                    onBlur={(e) => handleUpdate(asset.id, m, e.target.value)}
+                                                />
+                                            </div>
                                         </td>
                                     );
                                 })}
@@ -182,7 +185,7 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                         ))}
                         {assets.length === 0 && (
                             <tr>
-                                <td colSpan={months.length + 1} className="p-4 text-center text-muted-foreground">
+                                <td colSpan={months.length + 1} className="p-4 text-center text-muted-foreground border">
                                     No assets found. Add one above.
                                 </td>
                             </tr>
@@ -190,7 +193,7 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                     </tbody>
                     <tfoot className="bg-muted/50 border-t font-semibold">
                         <tr>
-                            <td className="p-4 align-middle sticky left-0 bg-muted/95 backdrop-blur z-20 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)]">Total</td>
+                            <td className="p-4 align-middle sticky left-0 bg-muted/95 backdrop-blur z-20 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] border">Total</td>
                             {months.map((m) => {
                                 const total = assets.reduce((sum, asset) => {
                                     const record = asset.records.find(
@@ -202,7 +205,7 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                 }, 0);
 
                                 return (
-                                    <td key={m.toISOString()} className="p-2 px-4 text-right align-middle">
+                                    <td key={m.toISOString()} className="p-2 px-4 text-right align-middle border">
                                         ${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </td>
                                 );
