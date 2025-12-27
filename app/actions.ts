@@ -290,3 +290,17 @@ export async function getExpensesForMonth(month: Date) {
         id: cat.records[0]?.id || 'virtual'
     })).filter(e => e.amount > 0);
 }
+
+export async function updatePassword(password: string) {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+        throw new Error("Not authenticated");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.user.update({
+        where: { id: session.user.id },
+        data: { password: hashedPassword }
+    });
+}
