@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Asset {
+  id        String        @id @default(cuid())
+  name      String
+  type      String        @default("BANK") // BANK, INVESTMENT, REAL_ESTATE, CPF, OTHER
+  color     String        @default("#000000")
+  order     Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  records   AssetRecord[]
+}
+
+model AssetRecord {
+  id        String   @id @default(cuid())
+  assetId   String
+  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  month     DateTime // Stored as the 1st of the month
+  value     Float
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([assetId, month])
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  color     String    @default("#000000")
+  order     Int       @default(0)
+  records   ExpenseRecord[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model ExpenseRecord {
+  id         String   @id @default(cuid())
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  month      DateTime // Stored as the 1st of the month
+  amount     Float
+  note       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([categoryId, month])
+}
+
+model User {
+  id       String @id @default(cuid())
+  username String @unique
+  password String
+}
+

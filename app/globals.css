@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Deep Space Background: Very dark blue-black */
+  --background: 240 30% 6%;
+  /* Bright text */
+  --foreground: 210 40% 98%;
+
+  /* Darker/Lighter cards */
+  --card: 240 25% 10%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 240 25% 10%;
+  --popover-foreground: 210 40% 98%;
+
+  /* Electric Purple Primary */
+  --primary: 263 70% 65%;
+  --primary-foreground: 210 40% 98%;
+
+  /* Muted Blue-Grey */
+  --secondary: 240 20% 18%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 240 20% 18%;
+  --muted-foreground: 240 20% 65%;
+
+  /* Neon Cyan/Blue Accent */
+  --accent: 240 20% 18%;
+  --accent-foreground: 210 40% 98%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+
+  /* Subtle Purple-Blue Border */
+  --border: 240 20% 20%;
+  --input: 240 20% 20%;
+  --ring: 263 70% 65%;
+
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.08), transparent 25%),
+      radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.08), transparent 25%);
+  }
+}
