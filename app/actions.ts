@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_noStore as noStore } from "next/cache";
 import bcrypt from "bcryptjs";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -40,9 +40,6 @@ export async function updateAsset(id: string, data: { name?: string, color?: str
 }
 
 export async function moveAsset(id: string, direction: 'up' | 'down') {
-    const asset = await prisma.asset.findUnique({ where: { id } });
-    if (!asset) return;
-
     const assets = await prisma.asset.findMany({
         orderBy: { order: 'asc' }
     });
@@ -59,17 +56,17 @@ export async function moveAsset(id: string, direction: 'up' | 'down') {
         return; // specific direction move not possible
     }
 
-    // Update all orders to be consistent 1..N
-    // We update all because it's safer and fixes any existing gaps/duplicates
-    for (let i = 0; i < newAssets.length; i++) {
-        await prisma.asset.update({
-            where: { id: newAssets[i].id },
-            data: { order: i + 1 }
-        });
-    }
+    // Update all orders efficiently in a transaction
+    const updates = newAssets.map((asset, index) =>
+        prisma.asset.update({
+            where: { id: asset.id },
+            data: { order: index + 1 }
+        })
+    );
 
-    revalidatePath("/");
-    revalidatePath("/assets");
+    await prisma.$transaction(updates);
+
+    revalidatePath("/", 'layout');
 }
 
 export async function deleteAsset(id: string) {
@@ -154,9 +151,6 @@ export async function updateCategory(id: string, data: { name?: string, color?: 
 }
 
 export async function moveCategory(id: string, direction: 'up' | 'down') {
-    const category = await prisma.category.findUnique({ where: { id } });
-    if (!category) return;
-
     const categories = await prisma.category.findMany({
         orderBy: { order: 'asc' }
     });
@@ -173,15 +167,16 @@ export async function moveCategory(id: string, direction: 'up' | 'down') {
         return;
     }
 
-    for (let i = 0; i < newCategories.length; i++) {
-        await prisma.category.update({
-            where: { id: newCategories[i].id },
-            data: { order: i + 1 }
-        });
-    }
+    const updates = newCategories.map((cat, index) =>
+        prisma.category.update({
+            where: { id: cat.id },
+            data: { order: index + 1 }
+        })
+    );
 
-    revalidatePath("/");
-    revalidatePath("/expenses");
+    await prisma.$transaction(updates);
+
+    revalidatePath("/", 'layout');
 }
 
 export async function deleteCategory(id: string) {
@@ -232,6 +227,7 @@ export async function updateExpenseRecord(categoryId: string, year: number, mont
 }
 
 export async function getDashboardData() {
+    noStore();
     const assets = await prisma.asset.findMany({
         orderBy: {
             order: 'asc'
