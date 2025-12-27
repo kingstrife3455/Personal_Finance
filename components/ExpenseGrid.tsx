@@ -28,7 +28,8 @@ export function ExpenseGrid({ categories }: { categories: Category[] }) {
     const handleUpdate = async (categoryId: string, month: Date, value: string) => {
         const numValue = parseFloat(value);
         if (!isNaN(numValue)) {
-            await updateExpenseRecord(categoryId, month, numValue);
+            // We pass the year and month index explicitly to avoid timezone issues
+            await updateExpenseRecord(categoryId, selectedYear, month.getMonth(), numValue);
         }
     };
 

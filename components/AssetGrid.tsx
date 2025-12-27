@@ -28,7 +28,10 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
     const handleUpdate = async (assetId: string, month: Date, value: string) => {
         const numValue = parseFloat(value);
         if (!isNaN(numValue)) {
-            await updateAssetRecord(assetId, month, numValue);
+            // We pass the year and month index explicitly to avoid timezone issues
+            // The 'month' Date object in the loop is already constructed from selectedYear and month index (0-11)
+            // but passing it as a Date object across the wire can cause shift if client/server tz differ.
+            await updateAssetRecord(assetId, selectedYear, month.getMonth(), numValue);
         }
     };
 

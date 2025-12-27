@@ -43,28 +43,29 @@ export async function moveAsset(id: string, direction: 'up' | 'down') {
     const asset = await prisma.asset.findUnique({ where: { id } });
     if (!asset) return;
 
-    if (direction === 'up') {
-        const prev = await prisma.asset.findFirst({
-            where: { order: { lt: asset.order } },
-            orderBy: { order: 'desc' }
-        });
-        if (prev) {
-            await prisma.$transaction([
-                prisma.asset.update({ where: { id: asset.id }, data: { order: prev.order } }),
-                prisma.asset.update({ where: { id: prev.id }, data: { order: asset.order } })
-            ]);
-        }
+    const assets = await prisma.asset.findMany({
+        orderBy: { order: 'asc' }
+    });
+
+    const currentIndex = assets.findIndex(a => a.id === id);
+    if (currentIndex === -1) return;
+
+    const newAssets = [...assets];
+    if (direction === 'up' && currentIndex > 0) {
+        [newAssets[currentIndex], newAssets[currentIndex - 1]] = [newAssets[currentIndex - 1], newAssets[currentIndex]];
+    } else if (direction === 'down' && currentIndex < newAssets.length - 1) {
+        [newAssets[currentIndex], newAssets[currentIndex + 1]] = [newAssets[currentIndex + 1], newAssets[currentIndex]];
     } else {
-        const next = await prisma.asset.findFirst({
-            where: { order: { gt: asset.order } },
-            orderBy: { order: 'asc' }
+        return; // specific direction move not possible
+    }
+
+    // Update all orders to be consistent 1..N
+    // We update all because it's safer and fixes any existing gaps/duplicates
+    for (let i = 0; i < newAssets.length; i++) {
+        await prisma.asset.update({
+            where: { id: newAssets[i].id },
+            data: { order: i + 1 }
         });
-        if (next) {
-            await prisma.$transaction([
-                prisma.asset.update({ where: { id: asset.id }, data: { order: next.order } }),
-                prisma.asset.update({ where: { id: next.id }, data: { order: asset.order } })
-            ]);
-        }
     }
 
     revalidatePath("/");
@@ -92,8 +93,13 @@ export async function deleteAsset(id: string) {
     revalidatePath("/assets");
 }
 
-export async function updateAssetRecord(assetId: string, month: Date, value: number) {
-    const recordMonth = new Date(month.getFullYear(), month.getMonth(), 1);
+export async function updateAssetRecord(assetId: string, year: number, monthIndex: number, value: number) {
+    // Create UTC date for the 1st of the month to be safe, or just local date at noon to avoid boundary issues.
+    // However, Prisma stores DateTime as absolute UTC timestamps usually.
+    // If we want "January 2025", we want 2025-01-01 00:00:00 UTC implied.
+    // The previous bug was `new Date(month)` in client was local time, e.g. Jan 1 00:00 GMT+8 -> Dec 31 16:00 UTC prev year.
+    // We construct it here.
+    const recordMonth = new Date(Date.UTC(year, monthIndex, 1));
 
     await prisma.assetRecord.upsert({
         where: {
@@ -151,28 +157,27 @@ export async function moveCategory(id: string, direction: 'up' | 'down') {
     const category = await prisma.category.findUnique({ where: { id } });
     if (!category) return;
 
-    if (direction === 'up') {
-        const prev = await prisma.category.findFirst({
-            where: { order: { lt: category.order } },
-            orderBy: { order: 'desc' }
-        });
-        if (prev) {
-            await prisma.$transaction([
-                prisma.category.update({ where: { id: category.id }, data: { order: prev.order } }),
-                prisma.category.update({ where: { id: prev.id }, data: { order: category.order } })
-            ]);
-        }
+    const categories = await prisma.category.findMany({
+        orderBy: { order: 'asc' }
+    });
+
+    const currentIndex = categories.findIndex(c => c.id === id);
+    if (currentIndex === -1) return;
+
+    const newCategories = [...categories];
+    if (direction === 'up' && currentIndex > 0) {
+        [newCategories[currentIndex], newCategories[currentIndex - 1]] = [newCategories[currentIndex - 1], newCategories[currentIndex]];
+    } else if (direction === 'down' && currentIndex < newCategories.length - 1) {
+        [newCategories[currentIndex], newCategories[currentIndex + 1]] = [newCategories[currentIndex + 1], newCategories[currentIndex]];
     } else {
-        const next = await prisma.category.findFirst({
-            where: { order: { gt: category.order } },
-            orderBy: { order: 'asc' }
+        return;
+    }
+
+    for (let i = 0; i < newCategories.length; i++) {
+        await prisma.category.update({
+            where: { id: newCategories[i].id },
+            data: { order: i + 1 }
         });
-        if (next) {
-            await prisma.$transaction([
-                prisma.category.update({ where: { id: category.id }, data: { order: next.order } }),
-                prisma.category.update({ where: { id: next.id }, data: { order: category.order } })
-            ]);
-        }
     }
 
     revalidatePath("/");
@@ -202,8 +207,8 @@ export async function deleteCategory(id: string) {
     revalidatePath("/expenses");
 }
 
-export async function updateExpenseRecord(categoryId: string, month: Date, amount: number) {
-    const recordMonth = new Date(month.getFullYear(), month.getMonth(), 1);
+export async function updateExpenseRecord(categoryId: string, year: number, monthIndex: number, amount: number) {
+    const recordMonth = new Date(Date.UTC(year, monthIndex, 1));
 
     await prisma.expenseRecord.upsert({
         where: {
