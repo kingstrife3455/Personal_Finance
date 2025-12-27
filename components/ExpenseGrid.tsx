@@ -84,9 +84,9 @@ export function ExpenseGrid({ categories }: { categories: Category[] }) {
                 <table className="w-full text-sm">
                     <thead className="bg-muted/50">
                         <tr className="border-b">
-                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground min-w-[200px] sticky left-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">Category</th>
+                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground min-w-[300px] sticky left-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">Category</th>
                             {months.map((m) => (
-                                <th key={m.toISOString()} className="h-12 px-4 text-right align-middle font-medium text-muted-foreground min-w-[100px]">
+                                <th key={m.toISOString()} className="h-12 px-4 text-right align-middle font-medium text-muted-foreground min-w-[140px]">
                                     {format(m, "MMM")}
                                 </th>
                             ))}
@@ -164,7 +164,7 @@ export function ExpenseGrid({ categories }: { categories: Category[] }) {
                                             <Input
                                                 type="number"
                                                 step="0.01"
-                                                className="text-right h-8 bg-transparent border-transparent hover:border-input focus:border-input focus:bg-background transition-all"
+                                                className="w-full text-right h-8 bg-transparent border-transparent hover:border-input focus:border-input focus:bg-background transition-all"
                                                 defaultValue={record?.amount}
                                                 onBlur={(e) => handleUpdate(cat.id, m, e.target.value)}
                                             />
