@@ -266,8 +266,24 @@ export async function getDashboardData() {
     });
 
     return {
-        assets,
-        categories,
+        assets: assets.map(a => ({
+            ...a,
+            records: a.records.map(r => ({
+                id: r.id,
+                value: r.value,
+                year: r.month.getUTCFullYear(),
+                month: r.month.getUTCMonth() // 0-11
+            }))
+        })),
+        categories: categories.map(c => ({
+            ...c,
+            records: c.records.map(r => ({
+                id: r.id,
+                amount: r.amount,
+                year: r.month.getUTCFullYear(),
+                month: r.month.getUTCMonth() // 0-11
+            }))
+        })),
         totalNetWorth
     };
 }

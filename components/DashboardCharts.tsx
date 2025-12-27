@@ -19,7 +19,8 @@ import {
 type Asset = {
     id: string;
     records: {
-        month: Date;
+        year: number;
+        month: number;
         value: number;
     }[];
 };
@@ -33,41 +34,59 @@ type Expense = {
 };
 
 export function AssetGrowthChart({ assets }: { assets: Asset[] }) {
-    // Aggregate data by month
-    const timeline = new Map<string, number>();
+    // Generate data points for the last 12 months (or relevant range)
+    // Since we want to show growth, let's find the min and max dates.
 
-    // Get all unique record months
-    const allMonths = new Set<string>();
-    assets.forEach(a => a.records.forEach(r => allMonths.add(new Date(r.month).toISOString())));
+    // Flatten all records to find range
+    const allRecords = assets.flatMap(a => a.records.map(r => ({
+        ...r,
+        dateVal: new Date(Date.UTC(r.year, r.month, 1)).getTime()
+    })));
 
-    // Sort months
-    const sortedMonths = Array.from(allMonths).sort().map(d => new Date(d));
+    if (allRecords.length === 0) return (
+        <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+            No asset history yet.
+        </div>
+    );
+
+    const uniqueMonths = Array.from(new Set(allRecords.map(r => r.dateVal))).sort((a, b) => a - b);
 
     // Build data points
-    const data = sortedMonths.map(month => {
+    const data = uniqueMonths.map(time => {
+        const date = new Date(time);
+        const year = date.getUTCFullYear();
+        const month = date.getUTCMonth();
+
         let total = 0;
         assets.forEach(asset => {
-            // Find record for this month
-            const record = asset.records.find(r =>
-                new Date(r.month).getTime() === month.getTime()
-            );
+            // Find exact match
+            const record = asset.records.find(r => r.year === year && r.month === month);
             if (record) {
                 total += record.value;
             } else {
-                // If no record for this month, carry forward previous known value (naive approach) 
-                // or just leave it. Let's strictly sum for now.
-                // Better approach: Find most recent record BEFORE or AT this month
-                const recentRecord = [...asset.records]
-                    .sort((a, b) => new Date(b.month).getTime() - new Date(a.month).getTime())
-                    .find(r => new Date(r.month).getTime() <= month.getTime());
+                // Carry forward? For now, strict sum of what's recorded for that month?
+                // Usually asset value is a snapshot. If no snapshot for March, but snapshot for Feb exists,
+                // we probably arguably still have that money.
+                // Let's implement carry-forward logic for better chart.
+                const previousRecords = asset.records
+                    .filter(r => {
+                        const rTime = new Date(Date.UTC(r.year, r.month, 1)).getTime();
+                        return rTime < time;
+                    })
+                    .sort((a, b) => {
+                        const timeA = new Date(Date.UTC(a.year, a.month, 1)).getTime();
+                        const timeB = new Date(Date.UTC(b.year, b.month, 1)).getTime();
+                        return timeB - timeA;
+                    });
 
-                if (recentRecord) {
-                    total += recentRecord.value;
+                if (previousRecords.length > 0) {
+                    total += previousRecords[0].value;
                 }
             }
         });
+
         return {
-            name: format(month, 'MMM yy'),
+            name: format(date, 'MMM yyyy'),
             value: total
         };
     });

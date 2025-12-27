@@ -5,13 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Category = {
     id: string;
     name: string;
     color: string;
     records: {
-        month: Date;
+        year: number;
+        month: number;
         amount: number;
     }[];
 };
@@ -19,6 +21,7 @@ type Category = {
 export function ExpenseGrid({ categories }: { categories: Category[] }) {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [isCreating, setIsCreating] = useState(false);
+    const router = useRouter();
 
     // Generate Jan-Dec for selectedYear
     const months = Array.from({ length: 12 }, (_, i) => {
@@ -30,12 +33,19 @@ export function ExpenseGrid({ categories }: { categories: Category[] }) {
         if (!isNaN(numValue)) {
             // We pass the year and month index explicitly to avoid timezone issues
             await updateExpenseRecord(categoryId, selectedYear, month.getMonth(), numValue);
+            router.refresh();
         }
     };
 
     const handleCreateCategory = async (formData: FormData) => {
         await createCategory(formData);
         setIsCreating(false);
+        router.refresh(); // Ensure list updates
+    };
+
+    const handleMove = async (id: string, direction: 'up' | 'down') => {
+        await moveCategory(id, direction);
+        router.refresh();
     };
 
     return (
@@ -89,14 +99,14 @@ export function ExpenseGrid({ categories }: { categories: Category[] }) {
                                     <div className="flex items-center gap-2">
                                         <div className="flex flex-col gap-0.5">
                                             <button
-                                                onClick={() => moveCategory(cat.id, 'up')}
+                                                onClick={() => handleMove(cat.id, 'up')}
                                                 className="h-3 w-3 flex items-center justify-center rounded hover:bg-muted text-[10px] text-muted-foreground leading-none"
                                                 title="Move Up"
                                             >
                                                 ▲
                                             </button>
                                             <button
-                                                onClick={() => moveCategory(cat.id, 'down')}
+                                                onClick={() => handleMove(cat.id, 'down')}
                                                 className="h-3 w-3 flex items-center justify-center rounded hover:bg-muted text-[10px] text-muted-foreground leading-none"
                                                 title="Move Down"
                                             >
@@ -108,6 +118,7 @@ export function ExpenseGrid({ categories }: { categories: Category[] }) {
                                                 if (confirm(`Are you sure you want to delete "${cat.name}"?`)) {
                                                     try {
                                                         await deleteCategory(cat.id);
+                                                        router.refresh();
                                                     } catch (error: any) {
                                                         alert(error.message);
                                                     }
@@ -125,6 +136,7 @@ export function ExpenseGrid({ categories }: { categories: Category[] }) {
                                             onBlur={(e) => {
                                                 if (e.target.value !== cat.color) {
                                                     updateCategory(cat.id, { color: e.target.value });
+                                                    router.refresh();
                                                 }
                                             }}
                                         />
@@ -134,6 +146,7 @@ export function ExpenseGrid({ categories }: { categories: Category[] }) {
                                             onBlur={(e) => {
                                                 if (e.target.value !== cat.name) {
                                                     updateCategory(cat.id, { name: e.target.value });
+                                                    router.refresh();
                                                 }
                                             }}
                                         />
@@ -142,8 +155,8 @@ export function ExpenseGrid({ categories }: { categories: Category[] }) {
                                 {months.map((m) => {
                                     const record = cat.records.find(
                                         (r) =>
-                                            new Date(r.month).getMonth() === m.getMonth() &&
-                                            new Date(r.month).getFullYear() === m.getFullYear()
+                                            r.month === m.getMonth() &&
+                                            r.year === m.getFullYear()
                                     );
 
                                     return (
@@ -168,8 +181,8 @@ export function ExpenseGrid({ categories }: { categories: Category[] }) {
                                 const total = categories.reduce((sum, cat) => {
                                     const record = cat.records.find(
                                         (r) =>
-                                            new Date(r.month).getMonth() === m.getMonth() &&
-                                            new Date(r.month).getFullYear() === m.getFullYear()
+                                            r.month === m.getMonth() &&
+                                            r.year === m.getFullYear()
                                     );
                                     return sum + (record?.amount || 0);
                                 }, 0);

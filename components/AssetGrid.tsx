@@ -4,6 +4,7 @@ import { updateAssetRecord, updateAsset, moveAsset, deleteAsset } from "@/app/ac
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Asset = {
     id: string;
@@ -11,7 +12,8 @@ type Asset = {
     type: string;
     color: string;
     records: {
-        month: Date;
+        year: number;
+        month: number;
         value: number;
         id: string;
     }[];
@@ -19,6 +21,7 @@ type Asset = {
 
 export function AssetGrid({ assets }: { assets: Asset[] }) {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const router = useRouter();
 
     // Generate Jan-Dec for selectedYear
     const months = Array.from({ length: 12 }, (_, i) => {
@@ -32,7 +35,13 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
             // The 'month' Date object in the loop is already constructed from selectedYear and month index (0-11)
             // but passing it as a Date object across the wire can cause shift if client/server tz differ.
             await updateAssetRecord(assetId, selectedYear, month.getMonth(), numValue);
+            router.refresh();
         }
+    };
+
+    const handleMove = async (id: string, direction: 'up' | 'down') => {
+        await moveAsset(id, direction);
+        router.refresh();
     };
 
     return (
@@ -74,14 +83,14 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                     <div className="flex items-center gap-2">
                                         <div className="flex flex-col gap-0.5">
                                             <button
-                                                onClick={() => moveAsset(asset.id, 'up')}
+                                                onClick={() => handleMove(asset.id, 'up')}
                                                 className="h-3 w-3 flex items-center justify-center rounded hover:bg-muted text-[10px] text-muted-foreground leading-none"
                                                 title="Move Up"
                                             >
                                                 ▲
                                             </button>
                                             <button
-                                                onClick={() => moveAsset(asset.id, 'down')}
+                                                onClick={() => handleMove(asset.id, 'down')}
                                                 className="h-3 w-3 flex items-center justify-center rounded hover:bg-muted text-[10px] text-muted-foreground leading-none"
                                                 title="Move Down"
                                             >
@@ -93,6 +102,7 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                                 if (confirm(`Are you sure you want to delete "${asset.name}"?`)) {
                                                     try {
                                                         await deleteAsset(asset.id);
+                                                        router.refresh();
                                                     } catch (error: any) {
                                                         alert(error.message);
                                                     }
@@ -111,6 +121,7 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                                 onBlur={(e) => {
                                                     if (e.target.value !== asset.color) {
                                                         updateAsset(asset.id, { color: e.target.value });
+                                                        router.refresh();
                                                     }
                                                 }}
                                             />
@@ -121,6 +132,7 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                                     onBlur={(e) => {
                                                         if (e.target.value !== asset.name) {
                                                             updateAsset(asset.id, { name: e.target.value });
+                                                            router.refresh();
                                                         }
                                                     }}
                                                 />
@@ -131,6 +143,7 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                                         onChange={(e) => {
                                                             if (e.target.value !== asset.type) {
                                                                 updateAsset(asset.id, { type: e.target.value });
+                                                                router.refresh();
                                                             }
                                                         }}
                                                     >
@@ -146,11 +159,11 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                     </div>
                                 </td>
                                 {months.map((m) => {
-                                    // Find record for this month
+                                    // Find record for this month using explicit year/month match
                                     const record = asset.records.find(
                                         (r) =>
-                                            new Date(r.month).getMonth() === m.getMonth() &&
-                                            new Date(r.month).getFullYear() === m.getFullYear()
+                                            r.month === m.getMonth() &&
+                                            r.year === m.getFullYear()
                                     );
 
                                     return (
@@ -160,9 +173,6 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                                 step="0.01"
                                                 className="text-right h-8 bg-transparent border-transparent hover:border-input focus:border-input focus:bg-background transition-all"
                                                 defaultValue={record?.value}
-                                                // Reset key when year changes to force re-render of defaultValue interaction if needed, 
-                                                // though defaultValue usually needs unique key if underlying data changes but component stays.
-                                                // Actually, key={m.toISOString()} changes when year changes, so Input remounts. Correct.
                                                 onBlur={(e) => handleUpdate(asset.id, m, e.target.value)}
                                             />
                                         </td>
@@ -185,8 +195,8 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                 const total = assets.reduce((sum, asset) => {
                                     const record = asset.records.find(
                                         (r) =>
-                                            new Date(r.month).getMonth() === m.getMonth() &&
-                                            new Date(r.month).getFullYear() === m.getFullYear()
+                                            r.month === m.getMonth() &&
+                                            r.year === m.getFullYear()
                                     );
                                     return sum + (record?.value || 0);
                                 }, 0);
