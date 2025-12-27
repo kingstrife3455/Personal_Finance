@@ -113,6 +113,73 @@ export function AssetGrowthChart({ assets }: { assets: Asset[] }) {
     );
 }
 
+export function YearlyExpenseChart({ data }: { data: { month: number, amount: number }[] }) {
+    const chartData = data.map(d => ({
+        name: format(new Date(2024, d.month, 1), 'MMM'), // Year doesn't matter for month name
+        amount: d.amount
+    }));
+
+    return (
+        <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                <Tooltip
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    formatter={(value: any) => [`$${Number(value).toLocaleString()}`, "Expenses"]}
+                />
+                <Line type="monotone" dataKey="amount" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+            </LineChart>
+        </ResponsiveContainer>
+    );
+}
+
+export function SpendingBreakdown({ current, prev }: { current: Record<string, number>, prev: Record<string, number> }) {
+    // Combine keys
+    const allLabels = Array.from(new Set([...Object.keys(current), ...Object.keys(prev)]));
+
+    // Sort by current month amount desc
+    allLabels.sort((a, b) => (current[b] || 0) - (current[a] || 0));
+
+    const totalCurrent = Object.values(current).reduce((a, b) => a + b, 0);
+    const totalPrev = Object.values(prev).reduce((a, b) => a + b, 0);
+
+    return (
+        <div className="space-y-4">
+            <div className="grid grid-cols-3 text-xs font-semibold text-muted-foreground uppercase pb-2 border-b">
+                <div>Category</div>
+                <div className="text-right">Prev Month</div>
+                <div className="text-right">Curr Month</div>
+            </div>
+            {allLabels.map(label => {
+                const currAmount = current[label] || 0;
+                const prevAmount = prev[label] || 0;
+
+                const currPercent = totalCurrent > 0 ? (currAmount / totalCurrent) * 100 : 0;
+                const prevPercent = totalPrev > 0 ? (prevAmount / totalPrev) * 100 : 0;
+
+                return (
+                    <div key={label} className="grid grid-cols-3 items-center text-sm">
+                        <div className="font-medium truncate">{label}</div>
+                        <div className="text-right">
+                            <div>${prevAmount.toLocaleString()}</div>
+                            <div className="text-xs text-muted-foreground">{prevPercent.toFixed(1)}%</div>
+                        </div>
+                        <div className="text-right font-medium">
+                            <div>${currAmount.toLocaleString()}</div>
+                            <div className="text-xs text-muted-foreground">{currPercent.toFixed(1)}%</div>
+                        </div>
+                    </div>
+                );
+            })}
+            {allLabels.length === 0 && (
+                <div className="text-center text-muted-foreground py-4">No expenses recorded.</div>
+            )}
+        </div>
+    );
+}
+
 export function SpendingPieChart({ expenses }: { expenses: Expense[] }) {
     // Group by category
     const categoryTotals = new Map<string, { value: number, color: string }>();

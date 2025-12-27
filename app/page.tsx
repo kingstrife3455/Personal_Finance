@@ -1,12 +1,12 @@
-import { getDashboardData, getExpensesForMonth } from "./actions";
-import { AssetGrowthChart, SpendingPieChart } from "@/components/DashboardCharts";
+import { getDashboardData, getExpenseStats } from "./actions";
+import { AssetGrowthChart, YearlyExpenseChart, SpendingBreakdown } from "@/components/DashboardCharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
-  const { assets, totalNetWorth } = await getDashboardData();
-  const currentMonthExpenses = await getExpensesForMonth(new Date());
+  const { assets, totalNetWorth, totalNetWorthPrev } = await getDashboardData();
+  const { yearlyTrend, breakdownCurrent, breakdownPrev, averageExpense } = await getExpenseStats();
 
   return (
     <main className="p-8 font-sans">
@@ -19,15 +19,25 @@ export default async function Home() {
             <p className="text-muted-foreground">Overview of your financial health.</p>
           </div>
 
-          <div className="flex items-center gap-4 rounded-lg border bg-card p-6 shadow-sm">
-            <div>
+          <div className="flex gap-4">
+            <div className="flex flex-col items-end rounded-lg border bg-card p-4 shadow-sm min-w-[200px]">
               <h2 className="text-sm font-medium text-muted-foreground">Net Worth</h2>
-              <p className="text-3xl font-bold text-primary">${totalNetWorth.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-primary">${totalNetWorth.toLocaleString()}</p>
+              <div className="text-xs text-muted-foreground">
+                Prev: ${totalNetWorthPrev.toLocaleString()}
+              </div>
+            </div>
+            <div className="flex flex-col items-end rounded-lg border bg-card p-4 shadow-sm min-w-[200px]">
+              <h2 className="text-sm font-medium text-muted-foreground">Avg Expense (Adj)</h2>
+              <p className="text-2xl font-bold text-red-500">${Math.round(averageExpense).toLocaleString()}</p>
+              <div className="text-xs text-muted-foreground">
+                Excl. Min/Max
+              </div>
             </div>
           </div>
         </header>
 
-        {/* Top Row: Charts */}
+        {/* Top Row: Asset Growth & Yearly Expenses */}
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
@@ -39,10 +49,22 @@ export default async function Home() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Monthly Spending</CardTitle>
+              <CardTitle>Yearly Expenses Trend</CardTitle>
             </CardHeader>
             <CardContent>
-              <SpendingPieChart expenses={currentMonthExpenses} />
+              <YearlyExpenseChart data={yearlyTrend} />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Breakdown Row */}
+        <div className="grid gap-4 md:grid-cols-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Expense Breakdown (Main Labels)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SpendingBreakdown current={breakdownCurrent} prev={breakdownPrev} />
             </CardContent>
           </Card>
         </div>

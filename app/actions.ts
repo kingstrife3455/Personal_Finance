@@ -119,9 +119,41 @@ export async function updateAssetRecord(assetId: string, year: number, monthInde
     revalidatePath("/assets");
 }
 
+export async function createMainCategory(name: string) {
+    await prisma.mainCategory.create({
+        data: { name }
+    });
+    revalidatePath("/expenses");
+}
+
+export async function updateMainCategory(id: string, name: string) {
+    await prisma.mainCategory.update({
+        where: { id },
+        data: { name }
+    });
+    revalidatePath("/expenses");
+}
+
+export async function deleteMainCategory(id: string) {
+    // Check if attached to any categories
+    const count = await prisma.category.count({
+        where: { mainCategoryId: id }
+    });
+
+    if (count > 0) {
+        throw new Error("Cannot delete Main Category that has sub-categories.");
+    }
+
+    await prisma.mainCategory.delete({
+        where: { id }
+    });
+    revalidatePath("/expenses");
+}
+
 export async function createCategory(formData: FormData) {
     const name = formData.get("name") as string;
     const color = formData.get("color") as string || "#000000";
+    const mainCategoryId = formData.get("mainCategoryId") as string || null;
 
     const maxOrderAgg = await prisma.category.aggregate({
         _max: { order: true }
@@ -132,7 +164,8 @@ export async function createCategory(formData: FormData) {
         data: {
             name,
             color,
-            order: nextOrder
+            order: nextOrder,
+            mainCategoryId: mainCategoryId === "" ? null : mainCategoryId
         }
     });
 
@@ -140,7 +173,7 @@ export async function createCategory(formData: FormData) {
     revalidatePath("/expenses");
 }
 
-export async function updateCategory(id: string, data: { name?: string, color?: string }) {
+export async function updateCategory(id: string, data: { name?: string, color?: string, mainCategoryId?: string | null }) {
     await prisma.category.update({
         where: { id },
         data
@@ -226,39 +259,60 @@ export async function updateExpenseRecord(categoryId: string, year: number, mont
     revalidatePath("/expenses");
 }
 
+export async function getAllMainCategories() {
+    return prisma.mainCategory.findMany({
+        orderBy: { name: 'asc' }
+    });
+}
+
 export async function getDashboardData() {
     noStore();
     const assets = await prisma.asset.findMany({
-        orderBy: {
-            order: 'asc'
-        },
+        orderBy: { order: 'asc' },
         include: {
-            records: {
-                orderBy: {
-                    month: 'asc'
-                }
-            }
+            records: { orderBy: { month: 'asc' } }
         }
     });
 
     const categories = await prisma.category.findMany({
-        orderBy: {
-            order: 'asc'
-        },
+        orderBy: { order: 'asc' },
         include: {
-            records: {
-                orderBy: {
-                    month: 'asc'
-                }
-            }
+            mainCategory: true,
+            records: { orderBy: { month: 'asc' } }
         }
     });
 
+    // Calculate dates
+    const now = new Date();
+    const currentYear = now.getUTCFullYear();
+    const currentMonth = now.getUTCMonth();
+
+    // Create Date objects for comparison
+    // We use UTC 1st of month as stored in DB
+    const currentMonthDate = new Date(Date.UTC(currentYear, currentMonth, 1));
+
+    // Previous Month
+    let prevYear = currentYear;
+    let prevMonth = currentMonth - 1;
+    if (prevMonth < 0) {
+        prevMonth = 11;
+        prevYear -= 1;
+    }
+    const prevMonthDate = new Date(Date.UTC(prevYear, prevMonth, 1));
+
     let totalNetWorth = 0;
+    let totalNetWorthPrev = 0;
+
     assets.forEach(asset => {
-        if (asset.records.length > 0) {
-            totalNetWorth += asset.records[asset.records.length - 1].value;
-        }
+        // Find current month record
+        const currentRecord = asset.records.find(r => r.month.getTime() === currentMonthDate.getTime());
+        const prevRecord = asset.records.find(r => r.month.getTime() === prevMonthDate.getTime());
+        // Fallback to latest if current/prev missing? 
+        // Logic: if current missing, maybe 0? Or latest? "Show previous month and current month"
+        // Let's rely on exact matches for dashboard "Current" vs "Previous"
+
+        if (currentRecord) totalNetWorth += currentRecord.value;
+        if (prevRecord) totalNetWorthPrev += prevRecord.value;
     });
 
     return {
@@ -268,7 +322,7 @@ export async function getDashboardData() {
                 id: r.id,
                 value: r.value,
                 year: r.month.getUTCFullYear(),
-                month: r.month.getUTCMonth() // 0-11
+                month: r.month.getUTCMonth()
             }))
         })),
         categories: categories.map(c => ({
@@ -277,10 +331,125 @@ export async function getDashboardData() {
                 id: r.id,
                 amount: r.amount,
                 year: r.month.getUTCFullYear(),
-                month: r.month.getUTCMonth() // 0-11
+                month: r.month.getUTCMonth()
             }))
         })),
-        totalNetWorth
+        totalNetWorth,
+        totalNetWorthPrev
+    };
+}
+
+
+export async function getExpenseStats() {
+    noStore();
+    const now = new Date();
+    const currentYear = now.getUTCFullYear();
+    const currentMonth = now.getUTCMonth();
+
+    const currentMonthDate = new Date(Date.UTC(currentYear, currentMonth, 1));
+
+    let prevYear = currentYear;
+    let prevMonth = currentMonth - 1;
+    if (prevMonth < 0) {
+        prevMonth = 11;
+        prevYear -= 1;
+    }
+    const prevMonthDate = new Date(Date.UTC(prevYear, prevMonth, 1));
+
+    // Get all categories with records
+    const categories = await prisma.category.findMany({
+        include: {
+            mainCategory: true,
+            records: {
+                where: {
+                    month: {
+                        in: [currentMonthDate, prevMonthDate]
+                    }
+                }
+            }
+        }
+    });
+
+    const yearlyRecords = await prisma.expenseRecord.findMany({
+        where: {
+            month: {
+                gte: new Date(Date.UTC(currentYear, 0, 1)), // Start of this year
+                lte: new Date(Date.UTC(currentYear, 11, 1)) // End of this year
+            }
+        }
+    });
+
+    // Group by month for yearly chart
+    const yearlyTrend = Array.from({ length: 12 }, (_, i) => ({
+        month: i,
+        amount: 0
+    }));
+
+    yearlyRecords.forEach(r => {
+        const m = r.month.getUTCMonth();
+        yearlyTrend[m].amount += r.amount;
+    });
+
+    // Breakdown by Main Label (or Category Name if no label)
+    const breakdownCurrent: Record<string, number> = {};
+    const breakdownPrev: Record<string, number> = {};
+
+    categories.forEach(cat => {
+        const label = cat.mainCategory?.name || "Uncategorized"; // Or maybe prioritize Main Label, fallback to ...? User said "tag existing categories to a main label".
+        // Actually user wants: "monthly breakdown should show the different labels and their percentage"
+
+        const currentRec = cat.records.find(r => r.month.getTime() === currentMonthDate.getTime());
+        const prevRec = cat.records.find(r => r.month.getTime() === prevMonthDate.getTime());
+
+        if (currentRec) {
+            breakdownCurrent[label] = (breakdownCurrent[label] || 0) + currentRec.amount;
+        }
+        if (prevRec) {
+            breakdownPrev[label] = (breakdownPrev[label] || 0) + prevRec.amount;
+        }
+    });
+
+    // Average Expense (excluding highest and lowest month of the last 12 months)
+    // We need last 12 months data
+    const last12MonthsStart = new Date(Date.UTC(currentYear - 1, currentMonth + 1, 1)); // 1 year ago next month ? Roughly.
+    // Easier: fetch all records for last 12 months.
+    // actually user said "remove highest and lowest expense month, then take an average of the remaining 10 months"
+    // Assuming this means across the "year" or "last 12 months". "across the year" usually means THIS year. 
+    // "Include a average expense widget but remove the highest and lowest expense month ... average of remaining 10 months"
+    // This implies a full year context. Let's assume current year mostly, or last 12 months. 
+    // Given the trend chart is "across the year", let's use the current year's data for the average if we have enough data (at least 3 months to drop 2).
+    // Or maybe last 12 months is safer if beginning of year. 
+    // "Across the year" -> trend line. "Display this average" -> widget. 
+    // Let's use the last 12 available months effectively, or just the current year if that's the context.
+    // Let's stick to Current Year for consistent context with the trend chart.
+
+    const monthlyTotals = yearlyTrend.map(yx => yx.amount).filter(a => a > 0);
+    // Filter 0? If month hasn't happened yet? 
+    // We should only count months that have passed or have data? 
+    // Use `yearlyRecords` grouped by month.
+
+    const validMonths = new Set(yearlyRecords.map(r => r.month.getTime()));
+    const monthsWithData = Array.from(validMonths).map(t => {
+        const d = new Date(t);
+        const m = d.getUTCMonth();
+        return yearlyTrend[m].amount;
+    });
+
+    let averageExpense = 0;
+    if (monthsWithData.length > 2) {
+        const min = Math.min(...monthsWithData);
+        const max = Math.max(...monthsWithData);
+        const sum = monthsWithData.reduce((a, b) => a + b, 0);
+        averageExpense = (sum - min - max) / (monthsWithData.length - 2);
+    } else if (monthsWithData.length > 0) {
+        averageExpense = monthsWithData.reduce((a, b) => a + b, 0) / monthsWithData.length;
+    }
+
+    return {
+        breakdownCurrent,
+        breakdownPrev,
+        yearlyTrend,
+        averageExpense
     };
 }
 
@@ -289,6 +458,7 @@ export async function getExpensesForMonth(month: Date) {
 
     const categories = await prisma.category.findMany({
         include: {
+            mainCategory: true,
             records: {
                 where: {
                     month: start
@@ -301,7 +471,8 @@ export async function getExpensesForMonth(month: Date) {
         amount: cat.records[0]?.amount || 0,
         category: {
             name: cat.name,
-            color: cat.color
+            color: cat.color,
+            mainCategoryName: cat.mainCategory?.name
         },
         date: start,
         id: cat.records[0]?.id || 'virtual'

@@ -1,4 +1,4 @@
-import { getDashboardData, getExpensesForMonth } from "@/app/actions";
+import { getDashboardData, getExpensesForMonth, getAllMainCategories } from "@/app/actions";
 import { ExpenseGrid } from "@/components/ExpenseGrid";
 import { SpendingPieChart } from "@/components/DashboardCharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function ExpensesPage() {
     const { categories } = await getDashboardData();
+    const mainCategories = await getAllMainCategories();
     const currentMonthExpenses = await getExpensesForMonth(new Date());
 
     return (
@@ -28,7 +29,7 @@ export default async function ExpensesPage() {
 
                 <div className="space-y-4">
                     <h2 className="text-xl font-semibold">Expense Spreadsheet</h2>
-                    <ExpenseGrid categories={categories} />
+                    <ExpenseGrid categories={categories} mainCategories={mainCategories} />
                 </div>
             </div>
         </main>
