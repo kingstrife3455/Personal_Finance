@@ -3,6 +3,8 @@ import { ExpenseGrid } from "@/components/ExpenseGrid";
 import { SpendingPieChart } from "@/components/DashboardCharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ExpensesPage() {
     const { categories } = await getDashboardData();
     const currentMonthExpenses = await getExpensesForMonth(new Date());

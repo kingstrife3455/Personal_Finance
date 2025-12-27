@@ -2,6 +2,8 @@ import { getDashboardData, getExpensesForMonth } from "./actions";
 import { AssetGrowthChart, SpendingPieChart } from "@/components/DashboardCharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const { assets, totalNetWorth } = await getDashboardData();
   const currentMonthExpenses = await getExpensesForMonth(new Date());
