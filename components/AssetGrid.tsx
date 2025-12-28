@@ -65,12 +65,12 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
             </div>
 
             <div className="overflow-x-auto rounded-lg border bg-card">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs">
                     <thead className="bg-muted/50">
                         <tr className="border-b">
-                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground min-w-[300px] sticky left-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border">Asset</th>
+                            <th className="h-8 px-2 text-left align-middle font-medium text-muted-foreground min-w-[200px] sticky left-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border">Asset</th>
                             {months.map((m) => (
-                                <th key={m.toISOString()} className="h-12 px-4 text-right align-middle font-medium text-muted-foreground min-w-[140px] border">
+                                <th key={m.toISOString()} className="h-8 px-2 text-right align-middle font-medium text-muted-foreground min-w-[80px] border">
                                     {format(m, "MMM")}
                                 </th>
                             ))}
@@ -79,44 +79,28 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                     <tbody>
                         {assets.map((asset) => (
                             <tr key={asset.id} className="border-b transition-colors hover:bg-muted/50">
-                                <td className="p-4 align-middle font-medium sticky left-0 bg-card z-10 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] border">
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex flex-col gap-0.5">
+                                <td className="p-1 align-middle font-medium sticky left-0 bg-card z-10 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] border group">
+                                    <div className="flex items-center gap-1">
+                                        <div className="flex flex-col gap-0 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => handleMove(asset.id, 'up')}
-                                                className="h-3 w-3 flex items-center justify-center rounded hover:bg-muted text-[10px] text-muted-foreground leading-none"
+                                                className="h-3 w-3 flex items-center justify-center rounded hover:bg-muted text-[8px] text-muted-foreground leading-none"
                                                 title="Move Up"
                                             >
                                                 ▲
                                             </button>
                                             <button
                                                 onClick={() => handleMove(asset.id, 'down')}
-                                                className="h-3 w-3 flex items-center justify-center rounded hover:bg-muted text-[10px] text-muted-foreground leading-none"
+                                                className="h-3 w-3 flex items-center justify-center rounded hover:bg-muted text-[8px] text-muted-foreground leading-none"
                                                 title="Move Down"
                                             >
                                                 ▼
                                             </button>
                                         </div>
-                                        <button
-                                            onClick={async () => {
-                                                if (confirm(`Are you sure you want to delete "${asset.name}"?`)) {
-                                                    try {
-                                                        await deleteAsset(asset.id);
-                                                        router.refresh();
-                                                    } catch (error: any) {
-                                                        alert(error.message);
-                                                    }
-                                                }
-                                            }}
-                                            className="h-6 w-6 flex items-center justify-center rounded hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-colors mx-1"
-                                            title="Delete Asset"
-                                        >
-                                            ×
-                                        </button>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1 w-full">
                                             <Input
                                                 type="color"
-                                                className="h-6 w-6 rounded-full p-0 border-0 flex-shrink-0 overflow-hidden cursor-pointer"
+                                                className="h-4 w-4 rounded-full p-0 border-0 flex-shrink-0 overflow-hidden cursor-pointer"
                                                 defaultValue={asset.color || "#000000"}
                                                 onBlur={(e) => {
                                                     if (e.target.value !== asset.color) {
@@ -125,9 +109,9 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                                     }
                                                 }}
                                             />
-                                            <div className="flex flex-col">
+                                            <div className="flex flex-col flex-1 min-w-0">
                                                 <Input
-                                                    className="h-7 bg-transparent border-transparent hover:border-input focus:border-input px-2 font-medium w-[150px]"
+                                                    className="h-6 bg-transparent border-transparent hover:border-input focus:border-input px-1 font-medium text-xs w-full"
                                                     defaultValue={asset.name}
                                                     onBlur={(e) => {
                                                         if (e.target.value !== asset.name) {
@@ -136,9 +120,9 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                                         }
                                                     }}
                                                 />
-                                                <div className="px-2">
+                                                <div className="px-1">
                                                     <select
-                                                        className="h-6 w-[150px] bg-transparent text-[10px] text-muted-foreground border-none hover:bg-muted/50 rounded cursor-pointer focus:ring-0 p-0"
+                                                        className="h-4 w-full bg-transparent text-[9px] text-muted-foreground border-none hover:bg-muted/50 rounded cursor-pointer focus:ring-0 p-0"
                                                         defaultValue={asset.type}
                                                         onChange={(e) => {
                                                             if (e.target.value !== asset.type) {
@@ -155,6 +139,22 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                                     </select>
                                                 </div>
                                             </div>
+                                            <button
+                                                onClick={async () => {
+                                                    if (confirm(`Are you sure you want to delete "${asset.name}"?`)) {
+                                                        try {
+                                                            await deleteAsset(asset.id);
+                                                            router.refresh();
+                                                        } catch (error: any) {
+                                                            alert(error.message);
+                                                        }
+                                                    }
+                                                }}
+                                                className="h-5 w-5 flex-shrink-0 flex items-center justify-center rounded hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-colors ml-auto text-xs opacity-0 group-hover:opacity-100"
+                                                title="Delete Asset"
+                                            >
+                                                ×
+                                            </button>
                                         </div>
                                     </div>
                                 </td>
@@ -167,13 +167,13 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                     );
 
                                     return (
-                                        <td key={m.toISOString()} className="p-2 align-middle border">
-                                            <div className="relative">
-                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
+                                        <td key={m.toISOString()} className="p-0 border align-middle">
+                                            <div className="relative group hover:bg-muted/10">
                                                 <Input
                                                     type="number"
                                                     step="0.01"
-                                                    className="w-full pl-6 text-right h-8 bg-transparent border-transparent hover:border-input focus:border-input focus:bg-background transition-all"
+                                                    className="w-full text-right h-8 px-1 bg-transparent border-transparent hover:bg-muted/30 focus:bg-background focus:border-input rounded-none transition-all text-xs"
+                                                    placeholder="-"
                                                     defaultValue={record?.value}
                                                     onBlur={(e) => handleUpdate(asset.id, m, e.target.value)}
                                                 />
@@ -193,7 +193,7 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                     </tbody>
                     <tfoot className="bg-muted/50 border-t font-semibold">
                         <tr>
-                            <td className="p-4 align-middle sticky left-0 bg-muted/95 backdrop-blur z-20 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] border">Total</td>
+                            <td className="p-2 align-middle sticky left-0 bg-muted/95 backdrop-blur z-20 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] border">Total</td>
                             {months.map((m) => {
                                 const total = assets.reduce((sum, asset) => {
                                     const record = asset.records.find(
@@ -205,7 +205,7 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
                                 }, 0);
 
                                 return (
-                                    <td key={m.toISOString()} className="p-2 px-4 text-right align-middle border">
+                                    <td key={m.toISOString()} className="p-2 px-2 text-right align-middle border text-xs">
                                         ${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </td>
                                 );
