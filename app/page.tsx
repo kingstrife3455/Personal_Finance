@@ -1,5 +1,5 @@
 import { getDashboardData, getExpenseStats } from "./actions";
-import { AssetGrowthChart, YearlyExpenseChart, SpendingBreakdown } from "@/components/DashboardCharts";
+import { AssetGrowthChart, YearlyExpenseChart } from "@/components/DashboardCharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const dynamic = 'force-dynamic';
@@ -58,16 +58,7 @@ export default async function Home() {
         </div>
 
         {/* Breakdown Row */}
-        <div className="grid gap-4 md:grid-cols-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Monthly Expense Breakdown (Main Labels)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SpendingBreakdown current={breakdownCurrent} prev={breakdownPrev} />
-            </CardContent>
-          </Card>
-        </div>
+        {/* Moved to Expenses Page */}
       </div>
     </main>
   );

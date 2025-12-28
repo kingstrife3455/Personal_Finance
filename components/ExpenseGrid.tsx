@@ -165,13 +165,13 @@ export function ExpenseGrid({ categories, mainCategories }: { categories: Catego
             </div>
 
             <div className="overflow-x-auto rounded-lg border bg-card">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs">
                     <thead className="bg-muted/50">
                         <tr className="border-b">
-                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground min-w-[200px] sticky left-0 bg-background/95 backdrop-blur z-20 border">Category</th>
-                            <th className="h-12 px-2 text-left align-middle font-medium text-muted-foreground min-w-[150px] border">Main Label</th>
+                            <th className="h-8 px-2 text-left align-middle font-medium text-muted-foreground min-w-[200px] sticky left-0 bg-background/95 backdrop-blur z-20 border">Category</th>
+                            <th className="h-8 px-2 text-left align-middle font-medium text-muted-foreground min-w-[150px] border">Main Label</th>
                             {months.map((m) => (
-                                <th key={m.toISOString()} className="h-12 px-4 text-right align-middle font-medium text-muted-foreground min-w-[120px] border">
+                                <th key={m.toISOString()} className="h-8 px-2 text-right align-middle font-medium text-muted-foreground min-w-[80px] border">
                                     {format(m, "MMM")}
                                 </th>
                             ))}
@@ -180,15 +180,15 @@ export function ExpenseGrid({ categories, mainCategories }: { categories: Catego
                     <tbody>
                         {categories.map((cat) => (
                             <tr key={cat.id} className="border-b transition-colors hover:bg-muted/50">
-                                <td className="p-4 align-middle font-medium sticky left-0 bg-card z-10 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] border group">
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleMove(cat.id, 'up')} className="text-[10px] hover:text-foreground text-muted-foreground">▲</button>
-                                            <button onClick={() => handleMove(cat.id, 'down')} className="text-[10px] hover:text-foreground text-muted-foreground">▼</button>
+                                <td className="p-1 align-middle font-medium sticky left-0 bg-card z-10 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] border group">
+                                    <div className="flex items-center gap-1">
+                                        <div className="flex flex-col gap-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => handleMove(cat.id, 'up')} className="text-[8px] hover:text-foreground text-muted-foreground">▲</button>
+                                            <button onClick={() => handleMove(cat.id, 'down')} className="text-[8px] hover:text-foreground text-muted-foreground">▼</button>
                                         </div>
                                         <Input
                                             type="color"
-                                            className="h-5 w-5 rounded-full p-0 border-0 flex-shrink-0 overflow-hidden cursor-pointer"
+                                            className="h-4 w-4 rounded-full p-0 border-0 flex-shrink-0 overflow-hidden cursor-pointer"
                                             defaultValue={cat.color}
                                             onBlur={(e) => {
                                                 if (e.target.value !== cat.color) {
@@ -198,7 +198,7 @@ export function ExpenseGrid({ categories, mainCategories }: { categories: Catego
                                             }}
                                         />
                                         <Input
-                                            className="h-7 bg-transparent border-transparent hover:border-input focus:border-input px-1 font-medium min-w-[120px]"
+                                            className="h-6 bg-transparent border-transparent hover:border-input focus:border-input px-1 font-medium min-w-[120px] text-xs"
                                             defaultValue={cat.name}
                                             onBlur={(e) => {
                                                 if (e.target.value !== cat.name) {
@@ -213,15 +213,15 @@ export function ExpenseGrid({ categories, mainCategories }: { categories: Catego
                                                     try { await deleteCategory(cat.id); router.refresh(); } catch (e: any) { alert(e.message); }
                                                 }
                                             }}
-                                            className="ml-auto opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                                            className="ml-auto opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive text-xs"
                                         >
                                             ×
                                         </button>
                                     </div>
                                 </td>
-                                <td className="p-2 border">
+                                <td className="p-1 border">
                                     <select
-                                        className="w-full h-8 bg-transparent border-transparent hover:border-input rounded px-1 text-xs"
+                                        className="w-full h-6 bg-transparent border-transparent hover:border-input rounded px-1 text-[10px]"
                                         value={cat.mainCategoryId || ""}
                                         onChange={async (e) => {
                                             const val = e.target.value || null;
@@ -244,12 +244,12 @@ export function ExpenseGrid({ categories, mainCategories }: { categories: Catego
 
                                     return (
                                         <td key={m.toISOString()} className="p-0 border align-middle">
-                                            <div className="relative group">
-                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">$</span>
+                                            <div className="relative group hover:bg-muted/10">
                                                 <Input
                                                     type="number"
                                                     step="0.01"
-                                                    className="w-full pl-5 text-right h-10 bg-transparent border-transparent hover:bg-muted/30 focus:bg-background focus:border-input rounded-none transition-all"
+                                                    className="w-full text-right h-7 px-1 bg-transparent border-transparent hover:bg-muted/30 focus:bg-background focus:border-input rounded-none transition-all text-xs"
+                                                    placeholder="-"
                                                     defaultValue={record?.amount}
                                                     onBlur={(e) => handleUpdate(cat.id, m, e.target.value)}
                                                 />
