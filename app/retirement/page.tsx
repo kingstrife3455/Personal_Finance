@@ -1,5 +1,6 @@
 import { getDashboardData } from "@/app/actions";
 import { AddAssetForm } from "@/components/AddAssetForm";
+import { CSVUploadModal } from "@/components/CSVUploadModal";
 import { AssetGrid } from "@/components/AssetGrid";
 import { AssetGrowthChart } from "@/components/DashboardCharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +31,10 @@ export default async function RetirementPage() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-semibold">Retirement Spreadsheet</h2>
-                        <AddAssetForm isRetirement={true} />
+                        <div className="flex items-center gap-2">
+                            <CSVUploadModal />
+                            <AddAssetForm isRetirement={true} />
+                        </div>
                     </div>
                     <AssetGrid assets={retirementAssets} />
                 </div>
