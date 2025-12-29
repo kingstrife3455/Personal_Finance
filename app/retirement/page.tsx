@@ -19,14 +19,25 @@ export default async function RetirementPage() {
                     <p className="text-muted-foreground">Track your long-term retirement funds (CPF, SRS, etc.).</p>
                 </header>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Retirement Growth</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <AssetGrowthChart assets={retirementAssets} />
-                    </CardContent>
-                </Card>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Retirement Growth</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <AssetGrowthChart assets={retirementAssets} />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>CPF SA Growth</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <AssetGrowthChart assets={retirementAssets.filter((a: any) => a.name === "SA" || a.name === "CPF SA")} />
+                        </CardContent>
+                    </Card>
+                </div>
 
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">

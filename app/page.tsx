@@ -38,6 +38,7 @@ export default async function Home() {
         </header>
 
         {/* Top Row: Asset Growth & Yearly Expenses */}
+
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
@@ -53,6 +54,18 @@ export default async function Home() {
             </CardHeader>
             <CardContent>
               <YearlyExpenseChart data={yearlyTrend} />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* CPF SA Growth Specific Chart */}
+        <div className="grid gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>CPF SA Growth</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AssetGrowthChart assets={assets.filter((a: any) => a.name === "SA" || a.name === "CPF SA")} />
             </CardContent>
           </Card>
         </div>
