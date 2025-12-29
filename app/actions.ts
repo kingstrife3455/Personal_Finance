@@ -501,7 +501,28 @@ export async function uploadRetirementCSV(formData: FormData) {
     if (!file) throw new Error("No file provided");
 
     const text = await file.text();
-    const rows = text.split(/\r?\n/).map(row => row.split(',').map(cell => cell.trim()));
+
+    // Helper to parse CSV line handling quoted comma values
+    const parseCSVLine = (line: string): string[] => {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                result.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        result.push(current.trim());
+        return result;
+    }
+
+    const rows = text.split(/\r?\n/).filter(r => r.trim()).map(parseCSVLine);
 
     if (rows.length < 5) throw new Error("Invalid CSV format: Too few rows");
 
@@ -542,9 +563,17 @@ export async function uploadRetirementCSV(formData: FormData) {
     const saValues = rows[4];
 
     const parseMonth = (mStr: string) => {
-        const d = new Date(`${mStr} 1, 2000`);
+        // Handle "Dec-22" -> "Dec"
+        const part = mStr.split('-')[0];
+        const d = new Date(`${part} 1, 2000`);
         if (!isNaN(d.getMonth())) return d.getMonth();
         return -1;
+    };
+
+    const cleanCurrency = (val: string) => {
+        // Remove " $", ",", spaces, quotes (though csv parser handles outer quotes)
+        if (!val) return NaN;
+        return parseFloat(val.replace(/[$,\s"']/g, ''));
     };
 
     const updates = [];
@@ -561,9 +590,9 @@ export async function uploadRetirementCSV(formData: FormData) {
         if (isNaN(year) || monthIndex === -1) continue;
 
         const values = {
-            "OA": parseFloat(oaValues[i]),
-            "MA": parseFloat(maValues[i]),
-            "SA": parseFloat(saValues[i])
+            "OA": cleanCurrency(oaValues[i]),
+            "MA": cleanCurrency(maValues[i]),
+            "SA": cleanCurrency(saValues[i])
         };
 
         for (const [type, val] of Object.entries(values)) {
