@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
-export function AddAssetForm() {
+export function AddAssetForm({ isRetirement = false }: { isRetirement?: boolean }) {
     const [isPending, setIsPending] = useState(false);
 
     async function handleSubmit(formData: FormData) {
@@ -23,6 +23,7 @@ export function AddAssetForm() {
             action={handleSubmit}
             className="flex w-full max-w-sm items-center space-x-2"
         >
+            <input type="hidden" name="isRetirement" value={String(isRetirement)} />
             <Input type="text" name="name" placeholder="Asset Name (e.g. DBS Savings)" required />
             <select
                 name="type"

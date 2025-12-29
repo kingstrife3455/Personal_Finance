@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Wallet, CreditCard } from "lucide-react";
+import { LayoutDashboard, Wallet, CreditCard, PiggyBank } from "lucide-react";
 
 export function Sidebar() {
     const pathname = usePathname();
@@ -11,6 +11,7 @@ export function Sidebar() {
     const links = [
         { href: "/", label: "Dashboard", icon: LayoutDashboard },
         { href: "/assets", label: "Assets", icon: Wallet },
+        { href: "/retirement", label: "Retirement", icon: PiggyBank },
         { href: "/expenses", label: "Expenses", icon: CreditCard },
     ];
 

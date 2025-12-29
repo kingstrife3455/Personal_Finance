@@ -12,14 +12,15 @@ datasource db {
 
 
 model Asset {
-  id        String        @id @default(cuid())
-  name      String
-  type      String        @default("BANK") // BANK, INVESTMENT, REAL_ESTATE, CPF, OTHER
-  color     String        @default("#000000")
-  order     Int           @default(0)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  records   AssetRecord[]
+  id           String        @id @default(cuid())
+  name         String
+  type         String        @default("BANK") // BANK, INVESTMENT, REAL_ESTATE, CPF, OTHER
+  color        String        @default("#000000")
+  order        Int           @default(0)
+  isRetirement Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  records      AssetRecord[]
 }
 
 model AssetRecord {

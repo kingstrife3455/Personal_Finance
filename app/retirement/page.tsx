@@ -6,33 +6,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const dynamic = 'force-dynamic';
 
-export default async function AssetsPage() {
+export default async function RetirementPage() {
     const { assets } = await getDashboardData();
-    const liquidAssets = assets.filter((a: any) => !a.isRetirement);
+    const retirementAssets = assets.filter((a: any) => a.isRetirement);
 
     return (
         <main className="p-8 font-sans">
             <div className="mx-auto max-w-7xl space-y-8">
                 <header>
-                    <h1 className="text-3xl font-bold tracking-tight">Asset Management</h1>
-                    <p className="text-muted-foreground">Track and update your asset balances.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-purple-600">Retirement Assets</h1>
+                    <p className="text-muted-foreground">Track your long-term retirement funds (CPF, SRS, etc.).</p>
                 </header>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Asset Growth</CardTitle>
+                        <CardTitle>Retirement Growth</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <AssetGrowthChart assets={liquidAssets} />
+                        <AssetGrowthChart assets={retirementAssets} />
                     </CardContent>
                 </Card>
 
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-semibold">Asset Spreadsheet</h2>
-                        <AddAssetForm isRetirement={false} />
+                        <h2 className="text-xl font-semibold">Retirement Spreadsheet</h2>
+                        <AddAssetForm isRetirement={true} />
                     </div>
-                    <AssetGrid assets={liquidAssets} />
+                    <AssetGrid assets={retirementAssets} />
                 </div>
             </div>
         </main>

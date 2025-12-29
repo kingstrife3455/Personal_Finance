@@ -10,6 +10,7 @@ export async function createAsset(formData: FormData) {
     const name = formData.get("name") as string;
     const type = formData.get("type") as string;
     const color = formData.get("color") as string || "#000000";
+    const isRetirement = formData.get("isRetirement") === "true";
 
     const maxOrderAgg = await prisma.asset.aggregate({
         _max: { order: true }
@@ -21,12 +22,14 @@ export async function createAsset(formData: FormData) {
             name,
             type,
             color,
-            order: nextOrder
+            order: nextOrder,
+            isRetirement
         },
     });
 
     revalidatePath("/");
     revalidatePath("/assets");
+    revalidatePath("/retirement");
 }
 
 export async function updateAsset(id: string, data: { name?: string, color?: string, type?: string }) {
