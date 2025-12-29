@@ -495,3 +495,102 @@ export async function updatePassword(password: string) {
         data: { password: hashedPassword }
     });
 }
+
+export async function uploadRetirementCSV(formData: FormData) {
+    const file = formData.get("file") as File;
+    if (!file) throw new Error("No file provided");
+
+    const text = await file.text();
+    const rows = text.split(/\r?\n/).map(row => row.split(',').map(cell => cell.trim()));
+
+    if (rows.length < 5) throw new Error("Invalid CSV format: Too few rows");
+
+    // Ensure assets exist
+    const assetTypes = ["OA", "MA", "SA"];
+    const assetMap: Record<string, string> = {}; // Name -> ID
+
+    for (const name of assetTypes) {
+        let asset = await prisma.asset.findFirst({
+            where: { name, isRetirement: true }
+        });
+
+        if (!asset) {
+            // Create if missing
+            const maxOrderAgg = await prisma.asset.aggregate({
+                _max: { order: true }
+            });
+            const nextOrder = (maxOrderAgg._max.order ?? 0) + 1;
+
+            asset = await prisma.asset.create({
+                data: {
+                    name,
+                    type: "CPF",
+                    isRetirement: true,
+                    order: nextOrder,
+                    color: name === "OA" ? "#3b82f6" : name === "MA" ? "#10b981" : "#f59e0b"
+                }
+            });
+        }
+        assetMap[name] = asset.id;
+    }
+
+    // Parse Data
+    const years = rows[0];
+    const months = rows[1];
+    const oaValues = rows[2];
+    const maValues = rows[3];
+    const saValues = rows[4];
+
+    const parseMonth = (mStr: string) => {
+        const d = new Date(`${mStr} 1, 2000`);
+        if (!isNaN(d.getMonth())) return d.getMonth();
+        return -1;
+    };
+
+    const updates = [];
+
+    for (let i = 1; i < years.length; i++) {
+        const yearStr = years[i];
+        const monthStr = months[i];
+
+        if (!yearStr || !monthStr) continue;
+
+        const year = parseInt(yearStr);
+        const monthIndex = parseMonth(monthStr);
+
+        if (isNaN(year) || monthIndex === -1) continue;
+
+        const values = {
+            "OA": parseFloat(oaValues[i]),
+            "MA": parseFloat(maValues[i]),
+            "SA": parseFloat(saValues[i])
+        };
+
+        for (const [type, val] of Object.entries(values)) {
+            if (!isNaN(val)) {
+                const assetId = assetMap[type];
+                const recordMonth = new Date(Date.UTC(year, monthIndex, 1));
+
+                updates.push(
+                    prisma.assetRecord.upsert({
+                        where: {
+                            assetId_month: {
+                                assetId,
+                                month: recordMonth,
+                            }
+                        },
+                        update: { value: val },
+                        create: {
+                            assetId,
+                            month: recordMonth,
+                            value: val
+                        }
+                    })
+                );
+            }
+        }
+    }
+
+    await prisma.$transaction(updates);
+    revalidatePath("/retirement");
+}
