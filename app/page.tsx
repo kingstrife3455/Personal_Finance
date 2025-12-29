@@ -1,5 +1,6 @@
 import { getDashboardData, getExpenseStats } from "./actions";
 import { AssetGrowthChart, YearlyExpenseChart } from "@/components/DashboardCharts";
+import { GrowthWidget } from "@/components/GrowthWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const dynamic = 'force-dynamic';
@@ -60,6 +61,7 @@ export default async function Home() {
 
         {/* CPF SA Growth Specific Chart */}
         <div className="grid gap-4">
+          <GrowthWidget asset={assets.find((a: any) => a.name === "SA" || a.name === "CPF SA")!} />
           <Card>
             <CardHeader>
               <CardTitle>CPF SA Growth</CardTitle>
